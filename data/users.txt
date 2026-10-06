@@ -1,0 +1,2 @@
+U001|ADMIN|Administrator|admin|admin123
+U002|OBSERVER|Miguel Relampagos|Observer|123456789
