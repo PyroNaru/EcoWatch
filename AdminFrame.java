@@ -7,31 +7,55 @@ public class AdminFrame extends JFrame {
 
     public AdminFrame(Admin admin) {
         this.admin = admin;
-        setTitle("EcoWatch - Admin: " + admin.getName());
+        setTitle("EcoWatch - Administrator Dashboard");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1000, 500);
+        setSize(1050, 540);
         setLocationRelativeTo(null);
 
-        JButton reviewBtn = new JButton("Review");
+        // Header info bar
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        JLabel welcomeLabel = new JLabel("Welcome, " + admin.getName() + " (Administrator)");
+        welcomeLabel.setFont(welcomeLabel.getFont().deriveFont(Font.BOLD, 14f));
+        headerPanel.add(welcomeLabel, BorderLayout.WEST);
+
+        // Action Toolbar
+        JButton reviewBtn = new JButton("Review & Manage");
         JButton statusBtn = new JButton("Update Status");
         JButton actionBtn = new JButton("Add Action");
-        JButton deleteBtn = new JButton("Delete");
+        JButton deleteBtn = new JButton("Delete Report");
+        JButton changePassBtn = new JButton("Change Password");
         JButton refreshBtn = new JButton("Refresh");
         JButton logoutBtn = new JButton("Logout");
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        for (JButton b : new JButton[]{reviewBtn, statusBtn, actionBtn, deleteBtn, refreshBtn, logoutBtn}) buttons.add(b);
 
-        JPanel root = new JPanel(new BorderLayout(5, 5));
-        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        buttons.add(reviewBtn);
+        buttons.add(statusBtn);
+        buttons.add(actionBtn);
+        buttons.add(deleteBtn);
+        buttons.add(refreshBtn);
+        buttons.add(changePassBtn);
+        buttons.add(logoutBtn);
+
+        JPanel root = new JPanel(new BorderLayout(8, 8));
+        root.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        root.add(headerPanel, BorderLayout.NORTH);
         root.add(tablePanel, BorderLayout.CENTER);
         root.add(buttons, BorderLayout.SOUTH);
         setContentPane(root);
 
+        // Listeners
         reviewBtn.addActionListener(e -> review());
         statusBtn.addActionListener(e -> updateStatus());
         actionBtn.addActionListener(e -> addAction());
         deleteBtn.addActionListener(e -> delete());
         refreshBtn.addActionListener(e -> tablePanel.refresh());
+        tablePanel.setOnRowDoubleClicked(this::showReviewDialog);
+
+        changePassBtn.addActionListener(e -> {
+            new ChangePasswordDialog(this, admin).setVisible(true);
+        });
+
         logoutBtn.addActionListener(e -> {
             admin.logout();
             dispose();
@@ -42,45 +66,39 @@ public class AdminFrame extends JFrame {
     /** @return selected report ID, or null (and shows a message) if nothing is selected */
     private String selected() {
         String id = tablePanel.getSelectedReportID();
-        if (id == null) JOptionPane.showMessageDialog(this, "Please select a report first.");
+        if (id == null) JOptionPane.showMessageDialog(this, "Please select a report first.", "No Selection", JOptionPane.WARNING_MESSAGE);
         return id;
     }
 
     private void review() {
         String id = selected();
         if (id == null) return;
-        EnvironmentalReport r = FileManager.findReport(id);
+        showReviewDialog(id);
+    }
+
+    private void showReviewDialog(String reportID) {
+        EnvironmentalReport r = FileManager.findReport(reportID);
         if (r == null) return;
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Report ID: ").append(r.getReportID()).append("\n");
-        sb.append("Category: ").append(r.getType()).append("\n");
-        sb.append(r.getCategoryDetails()).append("\n");          // polymorphic call
-        sb.append("Severity: ").append(r.getSeverity()).append("\n");
-        sb.append("Status: ").append(r.getStatus()).append("\n");
-        sb.append("Date: ").append(r.getDateReported()).append("\n");
-        sb.append("Location: ").append(r.getLocation().getFullAddress()).append("\n");
-        sb.append("Description: ").append(r.getDescription()).append("\n\n");
-        sb.append("Follow-up actions:\n");
-        if (r.getActions().isEmpty()) sb.append("  (none yet)");
-        for (ReportAction a : r.getActions()) sb.append("  - ").append(a.getDetails()).append("\n");
-
-        JTextArea area = new JTextArea(sb.toString(), 14, 40);
-        area.setEditable(false);
-        area.setLineWrap(true);
-        area.setWrapStyleWord(true);
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Review Report", JOptionPane.PLAIN_MESSAGE);
+        ReportDetailsDialog dialog = new ReportDetailsDialog(this, r, admin);
+        dialog.setVisible(true);
+        if (dialog.hasChanged()) {
+            tablePanel.refresh();
+        }
     }
 
     private void updateStatus() {
         String id = selected();
         if (id == null) return;
+        EnvironmentalReport r = FileManager.findReport(id);
+        if (r == null) return;
+
         String[] options = {"PENDING", "UNDER REVIEW", "RESOLVED"};
         String choice = (String) JOptionPane.showInputDialog(this, "New status for " + id + ":",
-                "Update Status", JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-        if (choice == null) return;
+                "Update Status", JOptionPane.PLAIN_MESSAGE, null, options, r.getStatus());
+        if (choice == null || choice.equals(r.getStatus())) return;
         admin.updateStatus(id, choice);
         tablePanel.refresh();
+        JOptionPane.showMessageDialog(this, "Status updated to " + choice + ".");
     }
 
     private void addAction() {
@@ -102,6 +120,7 @@ public class AdminFrame extends JFrame {
             return;
         }
         admin.addAction(id, a, rem);
+        tablePanel.refresh();
         JOptionPane.showMessageDialog(this, "Action recorded.");
     }
 
@@ -109,9 +128,10 @@ public class AdminFrame extends JFrame {
         String id = selected();
         if (id == null) return;
         int sure = JOptionPane.showConfirmDialog(this,
-                "Delete " + id + " and all its follow-up actions?", "Confirm delete", JOptionPane.YES_NO_OPTION);
+                "Delete " + id + " and all its follow-up actions and location data?", "Confirm delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (sure != JOptionPane.YES_OPTION) return;
         admin.deleteReport(id);
         tablePanel.refresh();
+        JOptionPane.showMessageDialog(this, "Report " + id + " deleted successfully.");
     }
 }

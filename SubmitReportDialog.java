@@ -103,6 +103,7 @@ public class SubmitReportDialog extends JDialog {
         }
         observer.createReport(report);
         submitted = true;
+        JOptionPane.showMessageDialog(this, "Report " + id + " submitted successfully!", "Report Submitted", JOptionPane.INFORMATION_MESSAGE);
         dispose();
     }
 

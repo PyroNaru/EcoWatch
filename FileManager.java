@@ -88,6 +88,8 @@ public class FileManager {
 
     public static void saveUser(User u) { saveRecord(USERS, u.toRecord()); }
 
+    public static void updateUser(User u) { updateRecord(USERS, u.getUserID(), u.toRecord()); }
+
     /** Rebuilds a User object (Observer or Admin) from users.txt. Returns null if not found. */
     public static User findUser(String username) {
         for (String[] r : loadRecords(USERS)) {
@@ -153,5 +155,9 @@ public class FileManager {
             if (r[0].equals(locationID)) return new Location(r[0], r[1], r[2]);
         }
         return new Location(locationID, "Unknown", "Unknown");
+    }
+
+    public static void updateAction(ReportAction a) {
+        updateRecord(ACTIONS, a.getActionID(), a.toRecord());
     }
 }

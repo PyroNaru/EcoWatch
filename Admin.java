@@ -43,4 +43,18 @@ public class Admin extends User {
         FileManager.saveRecord(FileManager.ACTIONS, a.toRecord());
         System.out.println("Action recorded.");
     }
+
+    public void updateAction(String reportID, String actionID, String newActionTaken, String newRemarks) {
+        EnvironmentalReport r = FileManager.findReport(reportID);
+        if (r == null) { System.out.println("Report not found."); return; }
+        for (ReportAction a : r.getActions()) {
+            if (a.getActionID().equals(actionID)) {
+                a.update(newActionTaken, newRemarks);
+                FileManager.updateAction(a);
+                System.out.println("Action updated.");
+                return;
+            }
+        }
+        System.out.println("Action not found.");
+    }
 }

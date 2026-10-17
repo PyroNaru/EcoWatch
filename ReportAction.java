@@ -14,8 +14,20 @@ public class ReportAction {
         this.remarks = remarks;
     }
 
-    public String getActionID() { return actionID; }
-    public String getReportID() { return reportID; }
+    public String getActionID()    { return actionID; }
+    public String getReportID()    { return reportID; }
+    public String getActionTaken() { return actionTaken; }
+    public String getDateTaken()   { return dateTaken; }
+    public String getRemarks()     { return remarks; }
+
+    public void update(String actionTaken, String remarks) {
+        if (actionTaken != null && !actionTaken.isBlank()) {
+            this.actionTaken = actionTaken;
+        }
+        if (remarks != null && !remarks.isBlank()) {
+            this.remarks = remarks;
+        }
+    }
 
     public String getDetails() {
         return "[" + dateTaken + "] " + actionTaken + " (" + remarks + ")";

@@ -63,10 +63,12 @@ public class LoginFrame extends JFrame {
         JTextField name = new JTextField(15);
         JTextField username = new JTextField(15);
         JPasswordField password = new JPasswordField(15);
-        JPanel p = new JPanel(new GridLayout(3, 2, 8, 8));
-        p.add(new JLabel("Full name:"));  p.add(name);
-        p.add(new JLabel("Username:"));   p.add(username);
-        p.add(new JLabel("Password:"));   p.add(password);
+        JPasswordField confirmPassword = new JPasswordField(15);
+        JPanel p = new JPanel(new GridLayout(4, 2, 8, 8));
+        p.add(new JLabel("Full name:"));        p.add(name);
+        p.add(new JLabel("Username:"));         p.add(username);
+        p.add(new JLabel("Password:"));         p.add(password);
+        p.add(new JLabel("Confirm Password:")); p.add(confirmPassword);
 
         int choice = JOptionPane.showConfirmDialog(this, p, "Register as Observer",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -75,8 +77,17 @@ public class LoginFrame extends JFrame {
         String n = FileManager.clean(name.getText());
         String u = FileManager.clean(username.getText());
         String pw = FileManager.clean(new String(password.getPassword()));
-        if (n.isEmpty() || u.isEmpty() || pw.isEmpty()) {
+        String cpw = FileManager.clean(new String(confirmPassword.getPassword()));
+        if (n.isEmpty() || u.isEmpty() || pw.isEmpty() || cpw.isEmpty()) {
             JOptionPane.showMessageDialog(this, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (!pw.equals(cpw)) {
+            JOptionPane.showMessageDialog(this, "Passwords do not match.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (pw.length() < 4) {
+            JOptionPane.showMessageDialog(this, "Password must be at least 4 characters.", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (FileManager.findUser(u) != null) {

@@ -24,6 +24,17 @@ public abstract class User {
         System.out.println(name + " logged out.");
     }
 
+    public boolean changePassword(String currentPassword, String newPassword) {
+        if (currentPassword == null || !this.password.equals(currentPassword)) {
+            return false;
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            return false;
+        }
+        this.password = newPassword;
+        return true;
+    }
+
     /** Overridden by each subclass (polymorphism). */
     public abstract String getRole();
 

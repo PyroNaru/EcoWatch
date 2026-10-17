@@ -1,2 +1,3 @@
 U001|ADMIN|Administrator|admin|admin123
 U002|OBSERVER|Miguel Relampagos|Observer|123456789
+U003|OBSERVER|Marchus Deligero|Marchus|Deligero123
