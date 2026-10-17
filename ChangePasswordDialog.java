@@ -1,9 +1,12 @@
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 
 /**
  * Modal dialog enabling authenticated users (Observer or Admin)
- * to change their account password with validation.
+ * to change their account password with validation and modern UI styling.
  */
 public class ChangePasswordDialog extends JDialog {
     private final User user;
@@ -13,25 +16,61 @@ public class ChangePasswordDialog extends JDialog {
     private boolean changed = false;
 
     public ChangePasswordDialog(Frame owner, User user) {
-        super(owner, "Change Password - " + user.getName(), true);
+        super(owner, "Account Security - Change Password", true);
         this.user = user;
+        UITheme.setupWindow(this, 440, 320);
+        getContentPane().setBackground(UITheme.BG_APP);
 
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setBorder(BorderFactory.createEmptyBorder(18, 20, 10, 20));
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(UITheme.PRIMARY);
+        headerPanel.setBorder(new EmptyBorder(12, 18, 12, 18));
 
-        addRow(form, 0, new JLabel("Current Password:"), currentPasswordField);
-        addRow(form, 1, new JLabel("New Password:"), newPasswordField);
-        addRow(form, 2, new JLabel("Confirm Password:"), confirmPasswordField);
+        JLabel titleLbl = new JLabel("🔒 Change Password");
+        titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        titleLbl.setForeground(Color.WHITE);
 
-        JButton saveBtn = new JButton("Update Password");
-        JButton cancelBtn = new JButton("Cancel");
+        JLabel subLbl = new JLabel("User: " + user.getName());
+        subLbl.setFont(UITheme.FONT_SUBTITLE);
+        subLbl.setForeground(new Color(220, 252, 231));
+
+        headerPanel.add(titleLbl, BorderLayout.WEST);
+        headerPanel.add(subLbl, BorderLayout.EAST);
+
+        // Form Card
+        JPanel formCard = new JPanel(new GridBagLayout());
+        formCard.setBackground(UITheme.CARD_BG);
+        formCard.setBorder(new CompoundBorder(
+                new LineBorder(UITheme.BORDER, 1, true),
+                new EmptyBorder(16, 20, 16, 20)
+        ));
+
+        styleField(currentPasswordField);
+        styleField(newPasswordField);
+        styleField(confirmPasswordField);
+
+        addRow(formCard, 0, "Current Password:", currentPasswordField);
+        addRow(formCard, 1, "New Password:", newPasswordField);
+        addRow(formCard, 2, "Confirm Password:", confirmPasswordField);
+
+        // Buttons
+        JButton saveBtn = UITheme.createPrimaryButton("Update Password");
+        JButton cancelBtn = UITheme.createSecondaryButton("Cancel");
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        buttons.add(saveBtn);
+        buttons.setBackground(UITheme.BG_APP);
         buttons.add(cancelBtn);
+        buttons.add(saveBtn);
 
-        setLayout(new BorderLayout());
-        add(form, BorderLayout.CENTER);
-        add(buttons, BorderLayout.SOUTH);
+        JPanel content = new JPanel(new BorderLayout(10, 10));
+        content.setBackground(UITheme.BG_APP);
+        content.setBorder(new EmptyBorder(12, 16, 12, 16));
+        content.add(formCard, BorderLayout.CENTER);
+        content.add(buttons, BorderLayout.SOUTH);
+
+        JPanel root = new JPanel(new BorderLayout());
+        root.add(headerPanel, BorderLayout.NORTH);
+        root.add(content, BorderLayout.CENTER);
+        setContentPane(root);
 
         saveBtn.addActionListener(e -> doChangePassword());
         cancelBtn.addActionListener(e -> dispose());
@@ -42,13 +81,26 @@ public class ChangePasswordDialog extends JDialog {
         setLocationRelativeTo(owner);
     }
 
-    private void addRow(JPanel panel, int row, JComponent label, JComponent field) {
+    private void styleField(JPasswordField field) {
+        field.setFont(UITheme.FONT_BODY);
+        field.setBorder(new CompoundBorder(
+                new LineBorder(UITheme.BORDER, 1, true),
+                new EmptyBorder(6, 10, 6, 10)
+        ));
+    }
+
+    private void addRow(JPanel panel, int row, String labelText, JComponent field) {
         GridBagConstraints c = new GridBagConstraints();
         c.gridy = row;
-        c.insets = new Insets(6, 6, 6, 6);
+        c.insets = new Insets(8, 6, 8, 6);
         c.anchor = GridBagConstraints.WEST;
         c.gridx = 0;
-        panel.add(label, c);
+
+        JLabel lbl = new JLabel(labelText);
+        lbl.setFont(UITheme.FONT_BODY_BOLD);
+        lbl.setForeground(UITheme.TEXT_MAIN);
+        panel.add(lbl, c);
+
         c.gridx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.weightx = 1.0;
