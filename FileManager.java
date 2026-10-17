@@ -160,4 +160,57 @@ public class FileManager {
     public static void updateAction(ReportAction a) {
         updateRecord(ACTIONS, a.getActionID(), a.toRecord());
     }
+
+    /** Pre-populates realistic initial environmental reports if reports.txt is empty. */
+    public static void seedSampleDataIfEmpty() {
+        if (!loadRecords(REPORTS).isEmpty()) return;
+
+        // Locations
+        Location loc1 = new Location("L001", "Tuguegarao East", "Tuguegarao City");
+        Location loc2 = new Location("L002", "Sabang", "Puerto Galera");
+        Location loc3 = new Location("L003", "San Mateo", "Norzagaray");
+        Location loc4 = new Location("L004", "Malagos", "Davao City");
+
+        saveRecord(LOCATIONS, loc1.toRecord());
+        saveRecord(LOCATIONS, loc2.toRecord());
+        saveRecord(LOCATIONS, loc3.toRecord());
+        saveRecord(LOCATIONS, loc4.toRecord());
+
+        // Reports
+        ClimateReport rep1 = new ClimateReport("R001", "U002",
+                "Rising river floodwaters recorded following persistent heavy rainfall. Embankment overtopping threatening low-lying households.",
+                "HIGH", "2026-10-14", "UNDER REVIEW", loc1, "Flash Flood");
+
+        MarineReport rep2 = new MarineReport("R002", "U003",
+                "Dense accumulation of non-biodegradable plastics and micro-waste washing ashore, choking nearshore coral reef zones.",
+                "MEDIUM", "2026-10-10", "RESOLVED", loc2, "Coastal Plastic Pollution");
+
+        LandReport rep3 = new LandReport("R003", "U002",
+                "Illegal quarrying activities and timber cutting causing noticeable soil slope instability near local watershed boundary.",
+                "HIGH", "2026-10-16", "PENDING", loc3, "Illegal Logging & Soil Erosion");
+
+        WildlifeReport rep4 = new WildlifeReport("R004", "U003",
+                "Juvenile Philippine eagle found grounded and entangled in discarded fishing nylon near forest border.",
+                "LOW", "2026-10-08", "RESOLVED", loc4, "Philippine Eagle (Pithecophaga jefferyi)", "Entangled Raptor Rescue");
+
+        saveRecord(REPORTS, rep1.toRecord());
+        saveRecord(REPORTS, rep2.toRecord());
+        saveRecord(REPORTS, rep3.toRecord());
+        saveRecord(REPORTS, rep4.toRecord());
+
+        // Actions
+        ReportAction act1 = new ReportAction("A001", "R001",
+                "Emergency rescue boats deployed; sandbag reinforcements initiated.", "2026-10-15",
+                "Coordinated with local CDRRMO emergency crew.");
+        ReportAction act2 = new ReportAction("A002", "R002",
+                "Organized coastal cleanup drive with 45 community volunteers.", "2026-10-12",
+                "Collected 380 kg of waste for eco-brick recycling.");
+        ReportAction act3 = new ReportAction("A003", "R004",
+                "Rescued by DENR-certified handlers; treated for minor wing abrasions and safely released.", "2026-10-09",
+                "Health clearance confirmed at raptor center.");
+
+        saveRecord(ACTIONS, act1.toRecord());
+        saveRecord(ACTIONS, act2.toRecord());
+        saveRecord(ACTIONS, act3.toRecord());
+    }
 }

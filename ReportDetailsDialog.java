@@ -1,10 +1,14 @@
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 /**
  * Reusable dialog displaying comprehensive details and chronological
- * action history for a report. Used by both Observer and Admin.
+ * action history for a report with modern card styling.
  */
 public class ReportDetailsDialog extends JDialog {
     private final EnvironmentalReport report;
@@ -12,7 +16,7 @@ public class ReportDetailsDialog extends JDialog {
     private final Admin admin;
     private final DefaultTableModel actionsModel;
     private final JTable actionsTable;
-    private final JLabel statusLabel;
+    private final JLabel statusBadge;
     private boolean changed = false;
 
     public ReportDetailsDialog(Frame owner, EnvironmentalReport report, User currentUser) {
@@ -21,87 +25,181 @@ public class ReportDetailsDialog extends JDialog {
         this.isAdmin = currentUser instanceof Admin;
         this.admin = isAdmin ? (Admin) currentUser : null;
 
-        setSize(700, 560);
+        setSize(800, 640);
+        UITheme.setupWindow(this, 750, 600);
         setLocationRelativeTo(owner);
-        setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(UITheme.BG_APP);
 
-        // --- Top Panel: Metadata & Geolocation ---
-        JPanel topPanel = new JPanel(new GridLayout(4, 2, 8, 4));
-        topPanel.setBorder(BorderFactory.createTitledBorder("Report Overview"));
+        // --- Top Header Banner ---
+        JPanel headerPanel = new JPanel(new BorderLayout(10, 0));
+        headerPanel.setBackground(isAdmin ? new Color(15, 23, 42) : UITheme.PRIMARY);
+        headerPanel.setBorder(new EmptyBorder(12, 18, 12, 18));
 
-        statusLabel = new JLabel(report.getStatus());
-        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD));
+        JLabel titleLbl = new JLabel("📋 Report Overview: " + report.getReportID());
+        titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        titleLbl.setForeground(Color.WHITE);
 
-        topPanel.add(new JLabel("Report ID: " + report.getReportID()));
-        topPanel.add(new JLabel("Category: " + report.getType()));
-        topPanel.add(new JLabel("Submitted By: " + report.getSubmitterID()));
-        topPanel.add(new JLabel("Date Reported: " + report.getDateReported()));
-        topPanel.add(new JLabel("Severity: " + report.getSeverity()));
+        statusBadge = new JLabel(report.getStatus());
+        statusBadge.setFont(UITheme.FONT_BADGE);
+        updateStatusBadgeColor();
+        statusBadge.setOpaque(true);
+        statusBadge.setBorder(new EmptyBorder(4, 12, 4, 12));
 
-        JPanel statusWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        statusWrapper.add(new JLabel("Status: "));
-        statusWrapper.add(statusLabel);
-        topPanel.add(statusWrapper);
+        headerPanel.add(titleLbl, BorderLayout.WEST);
+        headerPanel.add(statusBadge, BorderLayout.EAST);
 
-        topPanel.add(new JLabel("Location: " + report.getLocation().getFullAddress()));
-        topPanel.add(new JLabel("Details: " + report.getCategoryDetails()));
+        // --- Main Content Container ---
+        JPanel mainContent = new JPanel();
+        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
+        mainContent.setBackground(UITheme.BG_APP);
+        mainContent.setBorder(new EmptyBorder(14, 16, 14, 16));
 
-        // --- Center Panel: Description & Actions ---
-        JPanel centerPanel = new JPanel(new BorderLayout(8, 8));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+        // Metadata Card
+        JPanel metaCard = new JPanel(new GridLayout(3, 2, 12, 8));
+        metaCard.setBackground(UITheme.CARD_BG);
+        metaCard.setBorder(new CompoundBorder(
+                new LineBorder(UITheme.BORDER, 1, true),
+                new EmptyBorder(12, 16, 12, 16)
+        ));
 
-        // Description Box
-        JPanel descPanel = new JPanel(new BorderLayout());
-        descPanel.setBorder(BorderFactory.createTitledBorder("Report Description"));
-        JTextArea descArea = new JTextArea(report.getDescription(), 4, 30);
+        addMetaField(metaCard, "Category", report.getType());
+        addMetaField(metaCard, "Severity", report.getSeverity());
+        addMetaField(metaCard, "Submitted By", report.getSubmitterID());
+        addMetaField(metaCard, "Date Reported", report.getDateReported());
+        addMetaField(metaCard, "Location", report.getLocation().getFullAddress());
+        addMetaField(metaCard, "Category Details", report.getCategoryDetails());
+
+        // Description Card
+        JPanel descCard = new JPanel(new BorderLayout(6, 6));
+        descCard.setBackground(UITheme.CARD_BG);
+        descCard.setBorder(new CompoundBorder(
+                new LineBorder(UITheme.BORDER, 1, true),
+                new EmptyBorder(10, 14, 10, 14)
+        ));
+
+        JLabel descTitle = new JLabel("Problem Description");
+        descTitle.setFont(UITheme.FONT_BODY_BOLD);
+        descTitle.setForeground(UITheme.TEXT_MAIN);
+
+        JTextArea descArea = new JTextArea(report.getDescription(), 3, 30);
         descArea.setEditable(false);
         descArea.setLineWrap(true);
         descArea.setWrapStyleWord(true);
-        descPanel.add(new JScrollPane(descArea), BorderLayout.CENTER);
+        descArea.setFont(UITheme.FONT_BODY);
+        descArea.setBackground(new Color(248, 250, 252));
+        descArea.setBorder(new EmptyBorder(6, 8, 6, 8));
 
-        // Actions Table Box
-        JPanel actionsPanel = new JPanel(new BorderLayout(5, 5));
-        actionsPanel.setBorder(BorderFactory.createTitledBorder("Follow-up Action History"));
+        descCard.add(descTitle, BorderLayout.NORTH);
+        descCard.add(new JScrollPane(descArea), BorderLayout.CENTER);
 
-        actionsModel = new DefaultTableModel(new String[]{"Action ID", "Date Taken", "Action Taken", "Remarks"}, 0) {
+        // Actions Table Card
+        JPanel actionsCard = new JPanel(new BorderLayout(8, 8));
+        actionsCard.setBackground(UITheme.CARD_BG);
+        actionsCard.setBorder(new CompoundBorder(
+                new LineBorder(UITheme.BORDER, 1, true),
+                new EmptyBorder(12, 14, 12, 14)
+        ));
+
+        JLabel actionsTitle = new JLabel("Follow-up Action Log");
+        actionsTitle.setFont(UITheme.FONT_BODY_BOLD);
+        actionsTitle.setForeground(UITheme.TEXT_MAIN);
+
+        actionsModel = new DefaultTableModel(new String[]{"Action ID", "Date", "Action Taken", "Remarks"}, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
         actionsTable = new JTable(actionsModel);
         actionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        actionsTable.setRowHeight(22);
+        actionsTable.setRowHeight(28);
+        actionsTable.setFont(UITheme.FONT_BODY);
+        actionsTable.getTableHeader().setFont(UITheme.FONT_BODY_BOLD);
+        actionsTable.getTableHeader().setBackground(new Color(241, 245, 249));
+
+        // Column widths
+        actionsTable.getColumnModel().getColumn(0).setPreferredWidth(75);
+        actionsTable.getColumnModel().getColumn(1).setPreferredWidth(85);
+        actionsTable.getColumnModel().getColumn(2).setPreferredWidth(200);
+        actionsTable.getColumnModel().getColumn(3).setPreferredWidth(240);
+
+        DefaultTableCellRenderer centerRender = new DefaultTableCellRenderer();
+        centerRender.setHorizontalAlignment(SwingConstants.CENTER);
+        actionsTable.getColumnModel().getColumn(0).setCellRenderer(centerRender);
+        actionsTable.getColumnModel().getColumn(1).setCellRenderer(centerRender);
+
         loadActions();
 
-        actionsPanel.add(new JScrollPane(actionsTable), BorderLayout.CENTER);
+        JScrollPane actionScroll = new JScrollPane(actionsTable);
+        actionScroll.setPreferredSize(new Dimension(680, 140));
 
-        // Admin action management toolbar inside actions panel
+        actionsCard.add(actionsTitle, BorderLayout.NORTH);
+        actionsCard.add(actionScroll, BorderLayout.CENTER);
+
+        // Admin actions toolbar inside the card
         if (isAdmin) {
-            JPanel actionTools = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 2));
-            JButton addActionBtn = new JButton("Add Action");
-            JButton editActionBtn = new JButton("Edit Selected Action");
-            JButton updateStatusBtn = new JButton("Change Status");
+            JPanel adminTools = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 4));
+            adminTools.setBackground(UITheme.CARD_BG);
 
-            actionTools.add(updateStatusBtn);
-            actionTools.add(addActionBtn);
-            actionTools.add(editActionBtn);
-            actionsPanel.add(actionTools, BorderLayout.SOUTH);
+            JButton addActionBtn = UITheme.createPrimaryButton("+ Add Action");
+            JButton editActionBtn = UITheme.createSecondaryButton("Edit Selected Action");
+            JButton updateStatusBtn = UITheme.createSecondaryButton("Change Status");
+
+            adminTools.add(updateStatusBtn);
+            adminTools.add(editActionBtn);
+            adminTools.add(addActionBtn);
+            actionsCard.add(adminTools, BorderLayout.SOUTH);
 
             addActionBtn.addActionListener(e -> doAddAction());
             editActionBtn.addActionListener(e -> doEditAction());
             updateStatusBtn.addActionListener(e -> doUpdateStatus());
         }
 
-        centerPanel.add(descPanel, BorderLayout.NORTH);
-        centerPanel.add(actionsPanel, BorderLayout.CENTER);
+        mainContent.add(metaCard);
+        mainContent.add(Box.createVerticalStrut(10));
+        mainContent.add(descCard);
+        mainContent.add(Box.createVerticalStrut(10));
+        mainContent.add(actionsCard);
 
-        // --- Bottom Panel: Close Button ---
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        JButton closeBtn = new JButton("Close");
+        // --- Bottom Close Button ---
+        JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 10));
+        bottomBar.setBackground(UITheme.BG_APP);
+        JButton closeBtn = UITheme.createSecondaryButton("Close");
         closeBtn.addActionListener(e -> dispose());
-        bottomPanel.add(closeBtn);
+        bottomBar.add(closeBtn);
 
-        add(topPanel, BorderLayout.NORTH);
-        add(centerPanel, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        JPanel root = new JPanel(new BorderLayout());
+        root.add(headerPanel, BorderLayout.NORTH);
+        root.add(mainContent, BorderLayout.CENTER);
+        root.add(bottomBar, BorderLayout.SOUTH);
+        setContentPane(root);
+    }
+
+    private void updateStatusBadgeColor() {
+        String s = report.getStatus().toUpperCase();
+        if (s.equals("PENDING")) {
+            statusBadge.setForeground(UITheme.STATUS_PENDING_TXT);
+            statusBadge.setBackground(UITheme.STATUS_PENDING_BG);
+        } else if (s.equals("UNDER REVIEW")) {
+            statusBadge.setForeground(UITheme.STATUS_REVIEW_TXT);
+            statusBadge.setBackground(UITheme.STATUS_REVIEW_BG);
+        } else {
+            statusBadge.setForeground(UITheme.STATUS_RESOLVED_TXT);
+            statusBadge.setBackground(UITheme.STATUS_RESOLVED_BG);
+        }
+    }
+
+    private void addMetaField(JPanel panel, String label, String value) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        p.setOpaque(false);
+        JLabel lbl = new JLabel(label + ": ");
+        lbl.setFont(UITheme.FONT_BODY_BOLD);
+        lbl.setForeground(UITheme.TEXT_MUTED);
+
+        JLabel val = new JLabel(value);
+        val.setFont(UITheme.FONT_BODY);
+        val.setForeground(UITheme.TEXT_MAIN);
+
+        p.add(lbl);
+        p.add(val);
+        panel.add(p);
     }
 
     private void loadActions() {
@@ -136,7 +234,6 @@ public class ReportDetailsDialog extends JDialog {
         }
 
         admin.addAction(report.getReportID(), a, rem);
-        // Refresh local actions from disk
         EnvironmentalReport updated = FileManager.findReport(report.getReportID());
         if (updated != null) {
             report.getActions().clear();
@@ -185,7 +282,7 @@ public class ReportDetailsDialog extends JDialog {
         selectedAction.update(newAction, newRemarks);
         loadActions();
         changed = true;
-        JOptionPane.showMessageDialog(this, "Action updated successfully.");
+        JOptionPane.showMessageDialog(this, "Action updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void doUpdateStatus() {
@@ -197,7 +294,8 @@ public class ReportDetailsDialog extends JDialog {
 
         admin.updateStatus(report.getReportID(), choice);
         report.updateStatus(choice);
-        statusLabel.setText(choice);
+        statusBadge.setText(choice);
+        updateStatusBadgeColor();
         changed = true;
     }
 
