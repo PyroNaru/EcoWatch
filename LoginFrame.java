@@ -10,8 +10,8 @@ public class LoginFrame extends JFrame {
     private final JPasswordField passwordField = new JPasswordField(16);
 
     private JLabel createLogoLabel() {
-        ImageIcon originalIcon = new ImageIcon("assets\\FramelessLogo.png");
-        Image scaledImage = originalIcon.getImage().getScaledInstance(80, 49, Image.SCALE_SMOOTH);
+        ImageIcon originalIcon = new ImageIcon("assets/FramelessLogo.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(130, 78, Image.SCALE_SMOOTH);
         JLabel logoLabel = new JLabel(new ImageIcon(scaledImage),SwingConstants.CENTER);
 
         logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);

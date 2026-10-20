@@ -1,0 +1,4 @@
+R001|CLIMATE|U002|Rising river floodwaters recorded following persistent heavy rainfall. Embankment overtopping threatening low-lying households.|HIGH|2026-10-14|UNDER REVIEW|L001|Flash Flood
+R002|MARINE|U003|Dense accumulation of non-biodegradable plastics and micro-waste washing ashore, choking nearshore coral reef zones.|MEDIUM|2026-10-10|RESOLVED|L002|Coastal Plastic Pollution
+R003|LAND|U002|Illegal quarrying activities and timber cutting causing noticeable soil slope instability near local watershed boundary.|HIGH|2026-10-16|PENDING|L003|Illegal Logging & Soil Erosion
+R004|WILDLIFE|U003|Juvenile Philippine eagle found grounded and entangled in discarded fishing nylon near forest border.|LOW|2026-10-08|RESOLVED|L004|Philippine Eagle (Pithecophaga jefferyi)|Entangled Raptor Rescue

@@ -76,9 +76,17 @@ public class UITheme {
      * minimum dimensions, and Escape-key dismiss bindings for dialogs.
      */
     public static void setupWindow(Window window, int minW, int minH) {
-        window.setIconImage(getAppIcon());
-        window.setMinimumSize(new Dimension(minW, minH));
-    }   
+    window.setIconImage(getAppIcon());
+    window.setMinimumSize(new Dimension(minW, minH));
+    if (window instanceof JDialog) {
+        JRootPane root = ((JDialog) window).getRootPane();
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "ESCAPE_DISMISS");
+        root.getActionMap().put("ESCAPE_DISMISS", new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) { window.dispose(); }
+        });
+    }
+}
 
     /** Creates a primary button with rounded styling and hover states. */
     public static JButton createPrimaryButton(String text) {

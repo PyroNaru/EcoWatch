@@ -24,7 +24,7 @@ public class ObserverFrame extends JFrame {
         JPanel brandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         brandPanel.setOpaque(false);
 
-        ImageIcon originalIcon = new ImageIcon("assets\\WhiteFramelessLogo.png");
+        ImageIcon originalIcon = new ImageIcon("assets/WhiteFramelessLogo.png");
         Image scaledImage = originalIcon.getImage().getScaledInstance(40, 25, Image.SCALE_SMOOTH);
         JLabel brandIcon = new JLabel(new ImageIcon(scaledImage));
 

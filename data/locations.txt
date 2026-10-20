@@ -1,0 +1,4 @@
+L001|Tuguegarao East|Tuguegarao City
+L002|Sabang|Puerto Galera
+L003|San Mateo|Norzagaray
+L004|Malagos|Davao City
