@@ -23,8 +23,11 @@ public class ObserverFrame extends JFrame {
         // Left Branding
         JPanel brandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         brandPanel.setOpaque(false);
-        JLabel brandIcon = new JLabel("🌱");
-        brandIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+
+        ImageIcon originalIcon = new ImageIcon("assets\\WhiteFramelessLogo.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(40, 25, Image.SCALE_SMOOTH);
+        JLabel brandIcon = new JLabel(new ImageIcon(scaledImage));
+
         JLabel brandTitle = new JLabel("EcoWatch");
         brandTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         brandTitle.setForeground(Color.WHITE);

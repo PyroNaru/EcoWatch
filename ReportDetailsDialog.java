@@ -216,87 +216,457 @@ public class ReportDetailsDialog extends JDialog {
 
     private void doAddAction() {
         if (!isAdmin || admin == null) return;
-        JTextField actionField = new JTextField(20);
-        JTextField remarksField = new JTextField(20);
-        JPanel p = new JPanel(new GridLayout(2, 2, 8, 8));
-        p.add(new JLabel("Action Taken:")); p.add(actionField);
-        p.add(new JLabel("Remarks:"));      p.add(remarksField);
 
-        int choice = JOptionPane.showConfirmDialog(this, p, "Record Action for " + report.getReportID(),
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (choice != JOptionPane.OK_OPTION) return;
+        JDialog dialog = new JDialog(
+                this,
+                "Record Action - " + report.getReportID(),
+                true
+        );
 
-        String a = FileManager.clean(actionField.getText());
-        String rem = FileManager.clean(remarksField.getText());
-        if (a.isEmpty() || rem.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Both fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setSize(460, 350);
+        dialog.setResizable(false);
 
-        admin.addAction(report.getReportID(), a, rem);
-        EnvironmentalReport updated = FileManager.findReport(report.getReportID());
-        if (updated != null) {
-            report.getActions().clear();
-            report.getActions().addAll(updated.getActions());
-            loadActions();
-        }
-        changed = true;
+        // Main container
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(UITheme.BG_APP);
+
+        // Header
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setBackground(new Color(15, 23, 42));
+        header.setBorder(new EmptyBorder(18, 22, 18, 22));
+
+        JLabel title = new JLabel("Record Action");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setForeground(Color.WHITE);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subtitle = new JLabel(
+                "Add a follow-up action for report " + report.getReportID()
+        );
+        subtitle.setFont(UITheme.FONT_SUBTITLE);
+        subtitle.setForeground(new Color(203, 213, 225));
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        header.add(title);
+        header.add(Box.createVerticalStrut(5));
+        header.add(subtitle);
+
+        // Form panel
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBackground(UITheme.CARD_BG);
+        form.setBorder(new EmptyBorder(22, 24, 22, 24));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 0, 7, 0);
+
+        JLabel actionLabel = new JLabel("Action Taken");
+        actionLabel.setFont(UITheme.FONT_BODY_BOLD);
+        actionLabel.setForeground(UITheme.TEXT_MAIN);
+
+        JTextField actionField = new JTextField();
+        UITheme.styleInput(actionField);
+
+        JLabel remarksLabel = new JLabel("Remarks");
+        remarksLabel.setFont(UITheme.FONT_BODY_BOLD);
+        remarksLabel.setForeground(UITheme.TEXT_MAIN);
+
+        JTextField remarksField = new JTextField();
+        UITheme.styleInput(remarksField);
+
+        gbc.gridy = 0;
+        form.add(actionLabel, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 16, 0);
+        form.add(actionField, gbc);
+
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 7, 0);
+        form.add(remarksLabel, gbc);
+
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        form.add(remarksField, gbc);
+
+        // Footer buttons
+        JPanel footer = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 10, 0)
+        );
+        footer.setBackground(UITheme.BG_APP);
+        footer.setBorder(new EmptyBorder(12, 18, 16, 18));
+
+        JButton cancelButton = UITheme.createSecondaryButton("Cancel");
+        JButton saveButton = UITheme.createPrimaryButton("Save Action");
+
+        footer.add(cancelButton);
+        footer.add(saveButton);
+
+        root.add(header, BorderLayout.NORTH);
+        root.add(form, BorderLayout.CENTER);
+        root.add(footer, BorderLayout.SOUTH);
+
+        dialog.setContentPane(root);
+        dialog.getRootPane().setDefaultButton(saveButton);
+        dialog.setLocationRelativeTo(this);
+
+        // Cancel
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        // Save
+        saveButton.addActionListener(e -> {
+            String action = FileManager.clean(actionField.getText());
+            String remarks = FileManager.clean(remarksField.getText());
+
+            if (action.isEmpty() || remarks.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Both fields are required.", "Missing Information", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            admin.addAction(report.getReportID(), action, remarks);
+
+            EnvironmentalReport updated = FileManager.findReport(report.getReportID());
+
+            if (updated != null) {
+                report.getActions().clear();
+                report.getActions().addAll(updated.getActions());
+                loadActions();
+            }
+
+            changed = true;
+            dialog.dispose();
+        });
+
+        dialog.setVisible(true);
     }
 
     private void doEditAction() {
         if (!isAdmin || admin == null) return;
+
         int row = actionsTable.getSelectedRow();
+
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Please select an action from the table to edit.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please select an action from the table to edit.",
+                    "Selection Required",
+                    JOptionPane.WARNING_MESSAGE
+            );
             return;
         }
 
-        String actionID = (String) actionsModel.getValueAt(row, 0);
+        // Get the selected action ID.
+        int modelRow = actionsTable.convertRowIndexToModel(row);
+        String actionID = (String) actionsModel.getValueAt(modelRow, 0);
+
+        // Find the existing ReportAction.
         ReportAction selectedAction = null;
+
         for (ReportAction a : report.getActions()) {
             if (a.getActionID().equals(actionID)) {
                 selectedAction = a;
                 break;
             }
         }
-        if (selectedAction == null) return;
 
-        JTextField actionField = new JTextField(selectedAction.getActionTaken(), 20);
-        JTextField remarksField = new JTextField(selectedAction.getRemarks(), 20);
-        JPanel p = new JPanel(new GridLayout(2, 2, 8, 8));
-        p.add(new JLabel("Action Taken:")); p.add(actionField);
-        p.add(new JLabel("Remarks:"));      p.add(remarksField);
-
-        int choice = JOptionPane.showConfirmDialog(this, p, "Edit Action " + actionID,
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (choice != JOptionPane.OK_OPTION) return;
-
-        String newAction = FileManager.clean(actionField.getText());
-        String newRemarks = FileManager.clean(remarksField.getText());
-        if (newAction.isEmpty() || newRemarks.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Fields cannot be blank.", "Error", JOptionPane.ERROR_MESSAGE);
+        if (selectedAction == null) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "The selected action could not be found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
             return;
         }
 
-        admin.updateAction(report.getReportID(), actionID, newAction, newRemarks);
-        selectedAction.update(newAction, newRemarks);
-        loadActions();
-        changed = true;
-        JOptionPane.showMessageDialog(this, "Action updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+        // Keep a final reference for use inside the Save button listener.
+        final ReportAction actionToEdit = selectedAction;
+
+        // Create the Edit Action dialog.
+        JDialog dialog = new JDialog(
+                this,
+                "Edit Action - " + report.getReportID(),
+                true
+        );
+
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setSize(460, 350);
+        dialog.setResizable(false);
+
+        // Main container.
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(UITheme.BG_APP);
+
+        // Header.
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setBackground(new Color(15, 23, 42));
+        header.setBorder(new EmptyBorder(18, 22, 18, 22));
+
+        JLabel title = new JLabel("Edit Action");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setForeground(Color.WHITE);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subtitle = new JLabel(
+                "Update the action for report " + report.getReportID()
+        );
+        subtitle.setFont(UITheme.FONT_SUBTITLE);
+        subtitle.setForeground(new Color(203, 213, 225));
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        header.add(title);
+        header.add(Box.createVerticalStrut(5));
+        header.add(subtitle);
+
+        // Form panel.
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBackground(UITheme.CARD_BG);
+        form.setBorder(new EmptyBorder(22, 24, 22, 24));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 0, 7, 0);
+
+        JLabel actionLabel = new JLabel("Action Taken");
+        actionLabel.setFont(UITheme.FONT_BODY_BOLD);
+        actionLabel.setForeground(UITheme.TEXT_MAIN);
+
+        JTextField actionField = new JTextField(
+                actionToEdit.getActionTaken()
+        );
+        UITheme.styleInput(actionField);
+
+        JLabel remarksLabel = new JLabel("Remarks");
+        remarksLabel.setFont(UITheme.FONT_BODY_BOLD);
+        remarksLabel.setForeground(UITheme.TEXT_MAIN);
+
+        JTextField remarksField = new JTextField(
+                actionToEdit.getRemarks()
+        );
+        UITheme.styleInput(remarksField);
+
+        gbc.gridy = 0;
+        form.add(actionLabel, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 16, 0);
+        form.add(actionField, gbc);
+
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 7, 0);
+        form.add(remarksLabel, gbc);
+
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        form.add(remarksField, gbc);
+
+        // Footer buttons.
+        JPanel footer = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 10, 0)
+        );
+        footer.setBackground(UITheme.BG_APP);
+        footer.setBorder(new EmptyBorder(12, 18, 16, 18));
+
+        JButton cancelButton =
+                UITheme.createSecondaryButton("Cancel");
+
+        JButton saveButton =
+                UITheme.createPrimaryButton("Save Changes");
+
+        footer.add(cancelButton);
+        footer.add(saveButton);
+
+        // Assemble the dialog.
+        root.add(header, BorderLayout.NORTH);
+        root.add(form, BorderLayout.CENTER);
+        root.add(footer, BorderLayout.SOUTH);
+
+        dialog.setContentPane(root);
+        dialog.getRootPane().setDefaultButton(saveButton);
+        dialog.setLocationRelativeTo(this);
+
+        // Cancel button.
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        // Save button.
+        saveButton.addActionListener(e -> {
+            String newAction =
+                    FileManager.clean(actionField.getText());
+
+            String newRemarks =
+                    FileManager.clean(remarksField.getText());
+
+            if (newAction.isEmpty() || newRemarks.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                        dialog,
+                        "Fields cannot be blank.",
+                        "Missing Information",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            // Update the action using your existing admin method.
+            admin.updateAction(
+                    report.getReportID(),
+                    actionID,
+                    newAction,
+                    newRemarks
+            );
+
+            // Update the selected action and refresh the table.
+            actionToEdit.update(newAction, newRemarks);
+            loadActions();
+            changed = true;
+
+            dialog.dispose();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Action updated successfully.",
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        });
+
+        dialog.setVisible(true);
     }
 
     private void doUpdateStatus() {
         if (!isAdmin || admin == null) return;
-        String[] options = {"PENDING", "UNDER REVIEW", "RESOLVED"};
-        String choice = (String) JOptionPane.showInputDialog(this, "Select status for " + report.getReportID() + ":",
-                "Update Status", JOptionPane.PLAIN_MESSAGE, null, options, report.getStatus());
-        if (choice == null || choice.equals(report.getStatus())) return;
 
-        admin.updateStatus(report.getReportID(), choice);
-        report.updateStatus(choice);
-        statusBadge.setText(choice);
-        updateStatusBadgeColor();
-        changed = true;
+        String[] options = {
+            "PENDING",
+            "UNDER REVIEW",
+            "RESOLVED"
+        };
+
+        // Create the Change Status dialog.
+        JDialog dialog = new JDialog(
+                this,
+                "Update Status - " + report.getReportID(),
+                true
+        );
+
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setSize(460, 320);
+        dialog.setResizable(false);
+
+        // Main container.
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(UITheme.BG_APP);
+
+        // Header.
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setBackground(new Color(15, 23, 42));
+        header.setBorder(new EmptyBorder(18, 22, 18, 22));
+
+        JLabel title = new JLabel("Change Status");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setForeground(Color.WHITE);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subtitle = new JLabel(
+                "Update the status for report " + report.getReportID()
+        );
+        subtitle.setFont(UITheme.FONT_SUBTITLE);
+        subtitle.setForeground(new Color(203, 213, 225));
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        header.add(title);
+        header.add(Box.createVerticalStrut(5));
+        header.add(subtitle);
+
+        // Form panel.
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBackground(UITheme.CARD_BG);
+        form.setBorder(new EmptyBorder(22, 24, 22, 24));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 0, 8, 0);
+
+        JLabel statusLabel = new JLabel("Report Status");
+        statusLabel.setFont(UITheme.FONT_BODY_BOLD);
+        statusLabel.setForeground(UITheme.TEXT_MAIN);
+
+        JComboBox<String> statusCombo = new JComboBox<>(options);
+        statusCombo.setFont(UITheme.FONT_BODY);
+        statusCombo.setBackground(UITheme.CARD_BG);
+        statusCombo.setForeground(UITheme.TEXT_MAIN);
+        statusCombo.setFocusable(false);
+
+        // Select the report's current status.
+        statusCombo.setSelectedItem(report.getStatus());
+
+        gbc.gridy = 0;
+        form.add(statusLabel, gbc);
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        form.add(statusCombo, gbc);
+
+        // Footer buttons.
+        JPanel footer = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 10, 0)
+        );
+        footer.setBackground(UITheme.BG_APP);
+        footer.setBorder(new EmptyBorder(12, 18, 16, 18));
+
+        JButton cancelButton =
+                UITheme.createSecondaryButton("Cancel");
+
+        JButton saveButton =
+                UITheme.createPrimaryButton("Save Changes");
+
+        footer.add(cancelButton);
+        footer.add(saveButton);
+
+        // Assemble the dialog.
+        root.add(header, BorderLayout.NORTH);
+        root.add(form, BorderLayout.CENTER);
+        root.add(footer, BorderLayout.SOUTH);
+
+        dialog.setContentPane(root);
+        dialog.getRootPane().setDefaultButton(saveButton);
+        dialog.setLocationRelativeTo(this);
+
+        // Cancel button.
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        // Save button.
+        saveButton.addActionListener(e -> {
+            String choice = (String) statusCombo.getSelectedItem();
+
+            if (choice == null || choice.equals(report.getStatus())) {
+                dialog.dispose();
+                return;
+            }
+
+            // Preserve the existing status update logic.
+            admin.updateStatus(report.getReportID(), choice);
+            report.updateStatus(choice);
+            statusBadge.setText(choice);
+            updateStatusBadgeColor();
+            changed = true;
+
+            dialog.dispose();
+        });
+
+        dialog.setVisible(true);
     }
 
     public boolean hasChanged() {

@@ -67,33 +67,8 @@ public class UITheme {
      * representing an environmental seedling/shield in forest green.
      */
     public static synchronized Image getAppIcon() {
-        if (cachedIcon != null) return cachedIcon;
-        int size = 64;
-        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-        // Circular background with subtle drop shadow
-        g2.setColor(new Color(22, 101, 52));
-        g2.fillRoundRect(4, 4, size - 8, size - 8, 20, 20);
-
-        // Inner glowing border
-        g2.setColor(new Color(74, 222, 128));
-        g2.setStroke(new BasicStroke(2.5f));
-        g2.drawRoundRect(4, 4, size - 8, size - 8, 20, 20);
-
-        // Center Seedling graphic
-        g2.setColor(Color.WHITE);
-        g2.fillArc(16, 20, 18, 24, 0, 180);
-        g2.fillArc(30, 16, 18, 28, 0, 180);
-
-        g2.setStroke(new BasicStroke(3.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.drawLine(32, 28, 32, 48);
-        g2.dispose();
-
-        cachedIcon = img;
-        return cachedIcon;
+        ImageIcon icon = new ImageIcon("assets/FramedLogo.png");
+        return icon.getImage();
     }
 
     /**
@@ -102,24 +77,8 @@ public class UITheme {
      */
     public static void setupWindow(Window window, int minW, int minH) {
         window.setIconImage(getAppIcon());
-        if (window instanceof JFrame) {
-            JFrame f = (JFrame) window;
-            f.setMinimumSize(new Dimension(minW, minH));
-        } else if (window instanceof JDialog) {
-            JDialog d = (JDialog) window;
-            d.setMinimumSize(new Dimension(minW, minH));
-            // Register Escape key to dismiss dialog
-            JRootPane root = d.getRootPane();
-            root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-                    KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "ESCAPE_DISMISS");
-            root.getActionMap().put("ESCAPE_DISMISS", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    d.dispose();
-                }
-            });
-        }
-    }
+        window.setMinimumSize(new Dimension(minW, minH));
+    }   
 
     /** Creates a primary button with rounded styling and hover states. */
     public static JButton createPrimaryButton(String text) {
