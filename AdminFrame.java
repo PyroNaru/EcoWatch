@@ -23,8 +23,12 @@ public class AdminFrame extends JFrame {
         // Left Branding
         JPanel brandPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         brandPanel.setOpaque(false);
-        JLabel brandIcon = new JLabel("🛡️");
-        brandIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+
+        ImageIcon originalIcon =
+        new ImageIcon("assets/WhiteFramelessLogo.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(40, 25, Image.SCALE_SMOOTH);
+        JLabel brandIcon = new JLabel(new ImageIcon(scaledImage));
+        
         JLabel brandTitle = new JLabel("EcoWatch");
         brandTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         brandTitle.setForeground(Color.WHITE);
@@ -66,15 +70,11 @@ public class AdminFrame extends JFrame {
         bottomBar.setBackground(UITheme.BG_APP);
 
         JButton reviewBtn = UITheme.createPrimaryButton("Review & Manage");
-        JButton statusBtn = UITheme.createSecondaryButton("Update Status");
-        JButton actionBtn = UITheme.createSecondaryButton("Add Action");
         JButton deleteBtn = UITheme.createDangerButton("Delete Report");
         JButton changePassBtn = UITheme.createSecondaryButton("Change Password");
         JButton refreshBtn = UITheme.createSecondaryButton("Refresh");
 
         bottomBar.add(reviewBtn);
-        bottomBar.add(statusBtn);
-        bottomBar.add(actionBtn);
         bottomBar.add(deleteBtn);
         bottomBar.add(refreshBtn);
         bottomBar.add(changePassBtn);
@@ -93,8 +93,6 @@ public class AdminFrame extends JFrame {
 
         // --- Event Listeners ---
         reviewBtn.addActionListener(e -> review());
-        statusBtn.addActionListener(e -> updateStatus());
-        actionBtn.addActionListener(e -> addAction());
         deleteBtn.addActionListener(e -> delete());
         refreshBtn.addActionListener(e -> tablePanel.refresh());
         tablePanel.setOnRowDoubleClicked(this::showReviewDialog);
@@ -132,46 +130,6 @@ public class AdminFrame extends JFrame {
         if (dialog.hasChanged()) {
             tablePanel.refresh();
         }
-    }
-
-    private void updateStatus() {
-        String id = selected();
-        if (id == null) return;
-        EnvironmentalReport r = FileManager.findReport(id);
-        if (r == null) return;
-
-        String[] options = {"PENDING", "UNDER REVIEW", "RESOLVED"};
-        String choice = (String) JOptionPane.showInputDialog(this, "Select new status for " + id + ":",
-                "Update Report Status", JOptionPane.PLAIN_MESSAGE, null, options, r.getStatus());
-        if (choice == null || choice.equals(r.getStatus())) return;
-
-        admin.updateStatus(id, choice);
-        tablePanel.refresh();
-        JOptionPane.showMessageDialog(this, "Report " + id + " updated to " + choice + ".", "Status Updated", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void addAction() {
-        String id = selected();
-        if (id == null) return;
-        JTextField action = new JTextField(20);
-        JTextField remarks = new JTextField(20);
-        JPanel p = new JPanel(new GridLayout(2, 2, 8, 8));
-        p.add(new JLabel("Action Taken:")); p.add(action);
-        p.add(new JLabel("Remarks:"));      p.add(remarks);
-
-        int choice = JOptionPane.showConfirmDialog(this, p, "Record Action for " + id,
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (choice != JOptionPane.OK_OPTION) return;
-
-        String a = FileManager.clean(action.getText());
-        String rem = FileManager.clean(remarks.getText());
-        if (a.isEmpty() || rem.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Both fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        admin.addAction(id, a, rem);
-        tablePanel.refresh();
-        JOptionPane.showMessageDialog(this, "Action recorded successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void delete() {
