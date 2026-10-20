@@ -1,0 +1,3 @@
+A001|R001|Emergency rescue boats deployed; sandbag reinforcements initiated.|2026-10-15|Coordinated with local CDRRMO emergency crew.
+A002|R002|Organized coastal cleanup drive with 45 community volunteers.|2026-10-12|Collected 380 kg of waste for eco-brick recycling.
+A003|R004|Rescued by DENR-certified handlers; treated for minor wing abrasions and safely released.|2026-10-09|Health clearance confirmed at raptor center.
